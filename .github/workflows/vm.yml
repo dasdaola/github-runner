@@ -15,6 +15,15 @@ jobs:
           sudo apt-get install -y openssh-server
           sudo systemctl start ssh
 
+      - name: Configure SSH key
+        run: |
+          mkdir -p /home/runner/.ssh
+          echo "${{ secrets.SSH_PUBLIC_KEY }}" >> /home/runner/.ssh/authorized_keys
+          chmod 700 /home/runner/.ssh
+          chmod 600 /home/runner/.ssh/authorized_keys
+          sudo chown -R runner:runner /home/runner/.ssh
+          sudo systemctl restart ssh
+
       - name: Start Pinggy tunnel
         run: |
           ssh -o StrictHostKeyChecking=no \
