@@ -9,20 +9,27 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Install tmate
+      - name: Install SSH server
         run: |
           sudo apt-get update
-          sudo apt-get install -y tmate
+          sudo apt-get install -y openssh-server
+          sudo systemctl start ssh
 
-      - name: Start SSH session
+      - name: Start Pinggy tunnel
         run: |
-          tmate -S /tmp/tmate.sock new-session -d
+          ssh -o StrictHostKeyChecking=no \
+             -o ServerAliveInterval=30 \
+             -o ServerAliveCountMax=3 \
+             -p 443 \
+             -R0:localhost:22 \
+             tcp@free.pinggy.io 2>&1 | tee /tmp/pinggy.log &
+
           sleep 10
+
           echo "======================================"
-          echo "SSH COMMAND:"
-          tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}'
-          echo "WEB URL:"
-          tmate -S /tmp/tmate.sock display -p '#{tmate_web}'
+          echo "PINGGY CONNECTION INFO"
+          echo "======================================"
+          cat /tmp/pinggy.log
           echo "======================================"
 
       - name: Keep VM alive
