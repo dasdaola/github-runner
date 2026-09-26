@@ -17,10 +17,12 @@ jobs:
       - name: Start SSH session
         run: |
           tmate -S /tmp/tmate.sock new-session -d
-          tmate -S /tmp/tmate.sock wait tmate-ready
+          sleep 10
           echo "======================================"
           echo "SSH COMMAND:"
           tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}'
+          echo "WEB URL:"
+          tmate -S /tmp/tmate.sock display -p '#{tmate_web}'
           echo "======================================"
 
       - name: Keep VM alive
