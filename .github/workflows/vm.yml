@@ -1,0 +1,26 @@
+name: Temporary VM
+
+on:
+  workflow_dispatch:
+
+jobs:
+  vm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Show system info
+        run: |
+          echo "VM is running!"
+          uname -a
+          echo "CPU:"
+          nproc
+          echo "Memory:"
+          free -h
+          echo "Disk:"
+          df -h
+
+      - name: Keep VM alive
+        run: |
+          echo "Running for 6 hours..."
+          sleep 21600
