@@ -9,28 +9,10 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Install SSH server
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openssh-server
-
-      - name: Configure SSH
-        run: |
-          sudo mkdir -p /run/sshd
-
-          sudo useradd -m -s /bin/bash runner || true
-
-          echo 'runner:temporary123' | sudo chpasswd
-
-          sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
-          sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
-
-          sudo service ssh restart
-
-      - name: Show SSH info
-        run: |
-          echo "SSH server started"
-          sudo ss -tlnp | grep ':22'
+      - name: Start SSH session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
 
       - name: Keep VM alive
         run: sleep 21600
