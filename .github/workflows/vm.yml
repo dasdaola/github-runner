@@ -9,20 +9,28 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Connect to Tailscale
-        uses: tailscale/github-action@v4
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-
-      - name: Show runner address
+      - name: Install SSH server
         run: |
-          echo "Tailscale IP:"
-          tailscale ip -4
-          echo
-          echo "Tailscale status:"
-          tailscale status
+          sudo apt-get update
+          sudo apt-get install -y openssh-server
 
-      - name: Keep runner alive
+      - name: Configure SSH
+        run: |
+          sudo mkdir -p /run/sshd
+
+          sudo useradd -m -s /bin/bash runner || true
+
+          echo 'runner:temporary123' | sudo chpasswd
+
+          sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+
+          sudo service ssh restart
+
+      - name: Show SSH info
+        run: |
+          echo "SSH server started"
+          sudo ss -tlnp | grep ':22'
+
+      - name: Keep VM alive
         run: sleep 21600
