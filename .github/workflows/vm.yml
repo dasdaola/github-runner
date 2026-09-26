@@ -1,7 +1,10 @@
-name: Temporary VM
+name: SSH VM
 
 on:
   workflow_dispatch:
+
+permissions:
+  id-token: write
 
 jobs:
   vm:
@@ -9,18 +12,20 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Show system info
-        run: |
-          echo "VM is running!"
-          uname -a
-          echo "CPU:"
-          nproc
-          echo "Memory:"
-          free -h
-          echo "Disk:"
-          df -h
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:ci
 
-      - name: Keep VM alive
+      - name: Show runner address
         run: |
-          echo "Running for 6 hours..."
-          sleep 21600
+          echo "Tailscale IP:"
+          tailscale ip -4
+          echo
+          echo "Tailscale status:"
+          tailscale status
+
+      - name: Keep runner alive
+        run: sleep 21600
