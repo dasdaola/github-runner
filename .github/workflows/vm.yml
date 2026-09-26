@@ -13,7 +13,6 @@ jobs:
         uses: mxschmitt/action-tmate@v3
         with:
           detached: true
-          limit-access-to-actor: true
 
       - name: Keep VM alive
         run: sleep 21600
