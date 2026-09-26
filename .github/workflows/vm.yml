@@ -3,9 +3,6 @@ name: SSH VM
 on:
   workflow_dispatch:
 
-permissions:
-  id-token: write
-
 jobs:
   vm:
     runs-on: ubuntu-latest
@@ -16,7 +13,7 @@ jobs:
         uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          audience: ${{ secrets.TS_AUDIENCE }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
 
       - name: Show runner address
