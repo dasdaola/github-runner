@@ -40,6 +40,9 @@ jobs:
           echo "TAILSCALE STATUS:"
           tailscale status
           echo "======================================"
-
+          tailscale netcheck
+          echo "=============================="
+          tailscale status   
+      
       - name: Keep VM alive
         run: sleep 21600
