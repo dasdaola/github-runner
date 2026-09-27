@@ -53,11 +53,11 @@ jobs:
           echo "TAILSCALE DEBUG"
           echo "======================================"
           tailscale debug prefs
-       
-     - name: Ping my laptop from runner
+
+      - name: Ping my laptop from runner
         run: |
           echo "Pinging laptop..."
           tailscale ping 100.90.31.17
-     
-     - name: Keep VM alive
+
+      - name: Keep VM alive
         run: sleep 21600
