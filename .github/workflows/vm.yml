@@ -29,20 +29,30 @@ jobs:
         run: |
           sudo tailscale up \
             --authkey="${{ secrets.TS_AUTHKEY }}" \
-            --hostname="github-runner-${{ github.run_id }}"
+            --hostname="github-runner-${{ github.run_id }}" \
+            --accept-dns=false
 
       - name: Show connection info
         run: |
           echo "======================================"
-          echo "TAILSCALE IP:"
-          tailscale ip -4
+          echo "TAILSCALE IP"
           echo "======================================"
-          echo "TAILSCALE STATUS:"
+          tailscale ip -4
+
+          echo "======================================"
+          echo "TAILSCALE STATUS"
+          echo "======================================"
           tailscale status
+
+          echo "======================================"
+          echo "TAILSCALE NETCHECK"
           echo "======================================"
           tailscale netcheck
-          echo "=============================="
-          tailscale status   
-      
+
+          echo "======================================"
+          echo "TAILSCALE DEBUG"
+          echo "======================================"
+          tailscale debug prefs
+
       - name: Keep VM alive
         run: sleep 21600
