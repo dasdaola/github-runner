@@ -1,4 +1,4 @@
-name: SSH VM
+name: Tailscale SSH VM
 
 on:
   workflow_dispatch:
@@ -9,11 +9,9 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Install SSH server
+      - name: Install Tailscale
         run: |
-          sudo apt-get update
-          sudo apt-get install -y openssh-server
-          sudo systemctl start ssh
+          curl -fsSL https://tailscale.com/install.sh | sh
 
       - name: Configure SSH key
         run: |
@@ -22,23 +20,25 @@ jobs:
           chmod 700 /home/runner/.ssh
           chmod 600 /home/runner/.ssh/authorized_keys
           sudo chown -R runner:runner /home/runner/.ssh
-          sudo systemctl restart ssh
 
-      - name: Start Pinggy tunnel
+      - name: Start SSH
         run: |
-          ssh -o StrictHostKeyChecking=no \
-             -o ServerAliveInterval=30 \
-             -o ServerAliveCountMax=3 \
-             -p 443 \
-             -R0:localhost:22 \
-             tcp@free.pinggy.io 2>&1 | tee /tmp/pinggy.log &
+          sudo systemctl enable --now ssh
 
-          sleep 10
+      - name: Connect to Tailscale
+        run: |
+          sudo tailscale up \
+            --authkey="${{ secrets.TS_AUTHKEY }}" \
+            --hostname="github-runner-${{ github.run_id }}"
 
+      - name: Show connection info
+        run: |
           echo "======================================"
-          echo "PINGGY CONNECTION INFO"
+          echo "TAILSCALE IP:"
+          tailscale ip -4
           echo "======================================"
-          cat /tmp/pinggy.log
+          echo "TAILSCALE STATUS:"
+          tailscale status
           echo "======================================"
 
       - name: Keep VM alive
