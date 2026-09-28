@@ -1,4 +1,4 @@
-name: Tailscale SSH VM
+name: ngrok SSH VM
 
 on:
   workflow_dispatch:
@@ -9,51 +9,54 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Install Tailscale
-        run: |
-          curl -fsSL https://tailscale.com/install.sh | sh
-
       - name: Configure SSH key
         run: |
           mkdir -p /home/runner/.ssh
-          echo "${{ secrets.SSH_PUBLIC_KEY }}" >> /home/runner/.ssh/authorized_keys
+
+          echo "${{ secrets.SSH_PUBLIC_KEY }}" \
+            > /home/runner/.ssh/authorized_keys
+
           chmod 700 /home/runner/.ssh
           chmod 600 /home/runner/.ssh/authorized_keys
+
           sudo chown -R runner:runner /home/runner/.ssh
 
       - name: Start SSH
         run: |
           sudo systemctl enable --now ssh
 
-      - name: Connect to Tailscale
+      - name: Install ngrok
         run: |
-          sudo tailscale up \
-            --authkey="${{ secrets.TS_AUTHKEY }}" \
-            --hostname="github-runner-${{ github.run_id }}" \
-            --accept-dns=false
+          curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
+            | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
 
-      - name: Show connection info
+          echo "deb https://ngrok-agent.s3.amazonaws.com bookworm main" \
+            | sudo tee /etc/apt/sources.list.d/ngrok.list
+
+          sudo apt-get update
+          sudo apt-get install -y ngrok
+
+      - name: Configure ngrok
         run: |
-          echo "======================================"
-          echo "TAILSCALE IP"
-          echo "======================================"
-          tailscale ip -4
+          ngrok config add-authtoken "${{ secrets.NGROK_AUTHTOKEN }}"
+
+      - name: Start ngrok SSH tunnel
+        run: |
+          nohup ngrok tcp 22 \
+            --log=stdout \
+            > /tmp/ngrok.log 2>&1 &
+
+          sleep 5
 
           echo "======================================"
-          echo "TAILSCALE STATUS"
+          echo "NGROK SSH ENDPOINT"
           echo "======================================"
-          tailscale status
+
+          curl -s http://127.0.0.1:4040/api/tunnels \
+            | python3 -m json.tool
 
           echo "======================================"
-          echo "TAILSCALE NETCHECK"
-          echo "======================================"
-          tailscale netcheck
-
-          echo "======================================"
-          echo "TAILSCALE DEBUG"
-          echo "======================================"
-          tailscale debug prefs
-
 
       - name: Keep VM alive
         run: sleep 21600
+
