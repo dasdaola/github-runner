@@ -13,8 +13,7 @@ jobs:
         run: |
           mkdir -p /home/runner/.ssh
 
-          echo "${{ secrets.SSH_PUBLIC_KEY }}" \
-            > /home/runner/.ssh/authorized_keys
+          echo "${{ secrets.SSH_PUBLIC_KEY }}" > /home/runner/.ssh/authorized_keys
 
           chmod 700 /home/runner/.ssh
           chmod 600 /home/runner/.ssh/authorized_keys
@@ -36,27 +35,53 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ngrok
 
+          ngrok version
+
       - name: Configure ngrok
         run: |
           ngrok config add-authtoken "${{ secrets.NGROK_AUTHTOKEN }}"
 
       - name: Start ngrok SSH tunnel
         run: |
-          nohup ngrok tcp 22 \
-            --log=stdout \
-            > /tmp/ngrok.log 2>&1 &
+          echo "Starting ngrok..."
 
-          sleep 5
+          ngrok tcp 22 --log=stdout > /tmp/ngrok.log 2>&1 &
 
+          sleep 8
+
+          echo ""
           echo "======================================"
-          echo "NGROK SSH ENDPOINT"
+          echo "NGROK LOG"
           echo "======================================"
 
-          curl -s http://127.0.0.1:4040/api/tunnels \
-            | python3 -m json.tool
+          cat /tmp/ngrok.log
 
+          echo ""
+          echo "======================================"
+          echo "SSH CONNECTION"
+          echo "======================================"
+
+          ENDPOINT=$(grep -oE 'tcp://[^ ]+' /tmp/ngrok.log | head -n 1)
+
+          if [ -z "$ENDPOINT" ]; then
+            echo "ERROR: Could not find ngrok TCP endpoint."
+            echo ""
+            echo "Full ngrok output:"
+            cat /tmp/ngrok.log
+            exit 1
+          fi
+
+          echo "ngrok endpoint: $ENDPOINT"
+
+          HOST=$(echo "$ENDPOINT" | sed -E 's#tcp://([^:]+):.*#\1#')
+          PORT=$(echo "$ENDPOINT" | sed -E 's#tcp://[^:]+:([0-9]+).*#\1#')
+
+          echo ""
+          echo "Run this from your laptop:"
+          echo ""
+          echo "ssh -i ~/.ssh/id_ed25519 -p $PORT runner@$HOST"
+          echo ""
           echo "======================================"
 
       - name: Keep VM alive
         run: sleep 21600
-
