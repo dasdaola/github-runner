@@ -53,14 +53,6 @@ jobs:
           echo "======================================"
           tailscale netcheck
 
-      - name: Ping my laptop
-        run: |
-          echo "======================================"
-          echo "PINGING LAPTOP"
-          echo "======================================"
-
-          tailscale ping 100.90.31.17
-
       - name: Keep VM alive
         run: |
           sleep 21600
